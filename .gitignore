@@ -1,5 +1,6 @@
 auth.py
 test.py
+*.db
 
 *.pyc
 __pycache__/
