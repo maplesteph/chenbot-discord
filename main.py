@@ -26,7 +26,7 @@ class Chen(discord.Client):
 
         #temporary emergency shutdown command
         if (message.author.id == int(self.config.get('discord', 'globalAdmin')) 
-            and message.content == '!stop'):
+            and message.content == '!quit'):
             await self.close()
             
         if not self.on_cooldown(message.guild.id):
