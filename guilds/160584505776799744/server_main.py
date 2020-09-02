@@ -41,7 +41,7 @@ async def on_raw_reaction_add(payload, client):
         result = table.find_one(message_id=message.id)
         if result == None:
             starboard_channel = client.get_channel(int(config.get('starboard', 'channelID')))
-            embed = await generate_starboard_embed(message, payload)
+            embed = await generate_starboard_embed(message, reaction_object)
 
             starboard_msg = await starboard_channel.send(embed=embed)
 
@@ -58,7 +58,7 @@ async def on_raw_reaction_add(payload, client):
                 stars = reaction_object.count)
             table.update(data, ['stardboard_msg_id'])
 
-            await starboard_msg.edit(embed=generate_starboard_embed(message, payload))
+            await starboard_msg.edit(embed=generate_starboard_embed(message, reaction_object))
     else:
         return
 
@@ -102,18 +102,16 @@ async def handle_yell(message):
 
     await message.channel.send(msg)
 
-async def generate_starboard_embed(message, payload):
+async def generate_starboard_embed(message, reaction):
     user = message.author
-    reaction = str(payload.emoji)
 
     embed = discord.Embed(
-        title = message.content,
+        description = message.content,
         color = discord.Color.teal()
     )
     embed.set_author(name=user.name, icon_url=str(user.avatar_url))
-    embed.set_footer(text='{0} {1} ({2}) • {3} UTC'.format(
-        reaction.count,
-        config.get('starboard', 'emoteID'),
+    embed.set_footer(text='{0} ⭐ ({1}) • {2} UTC'.format(
+        str(reaction.count),
         message.id,
         message.created_at.strftime('%B %d, %Y')))
 
