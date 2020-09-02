@@ -32,6 +32,8 @@ async def on_raw_reaction_add(payload, client):
     channel = client.get_channel(payload.channel_id)
     message = await channel.fetch_message(payload.message_id)
     reaction_object = await get_reaction_object(message, reaction)
+    if str(channel.id) == config.get('starboard', 'channelID'):
+        return
 
     if reaction == config.get('starboard', 'emoteID') and reaction_object.count >= 1:
         db = dataset.connect('sqlite:///guilds/' + str(SERVER_ID) + '/server.db')        
@@ -109,10 +111,13 @@ async def generate_starboard_embed(message, reaction):
         color = discord.Color.teal()
     )
     embed.set_author(name=user.name, icon_url=str(user.avatar_url))
+    embed.add_field(name='\u200b', value ='→ [original message]({0}) in {1}'.format(message.jump_url, message.channel.mention))
+    if len(message.attachments) > 0:
+        embed.set_image(url=message.attachments[0].url)
     embed.set_footer(text='{0} ⭐ ({1}) • {2} UTC'.format(
         str(reaction.count),
         message.id,
-        message.created_at.strftime('%B %d, %Y')))
+        message.created_at.strftime('%Y-%m-%d at %H:%M')))
 
     return embed
 
