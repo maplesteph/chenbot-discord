@@ -1,21 +1,23 @@
 import discord
+import configparser
 import sqlite3
+import dataset
 import sys, os
 sys.path.insert(0, os.path.abspath('/...'))
 import message_event_definitions as med
+from datetime import date
 
+SERVER_ID = 160584505776799744
+CONFIG_FILE = 'guilds/' + str(SERVER_ID) + "/serverconfig.ini"
+config = configparser.ConfigParser()
+config.read(CONFIG_FILE)
 
-async def handle(message, message_event):
-    if message_event == med.MessageEvent.on_delete_message:
-        await on_delete_message(message)
-    if message_event == med.MessageEvent.on_message:
-        await on_message(message)
+async def on_message(message, client):
+    if (yell_check(message)):
+        await handle_yell(message)
 
-
-# EVENT HANDLERS
-
-async def on_delete_message(message):
-    if message.author.id == 155489418659102720:
+async def on_delete_message(message, client):
+    if message.author.id == int(config.get('misc', 'kevinID')):
         embed = discord.Embed(
             title = 'Recently deleted message',
             description = message.content,
@@ -26,13 +28,56 @@ async def on_delete_message(message):
         embed.set_thumbnail(url=str(message.author.avatar_url))
         await message.channel.send(embed=embed)
 
-async def on_message(message):
-    if (yell_check(message)):
-        await handle_yell(message)
+async def on_raw_reaction_add(payload, client):
+    reaction = str(payload.emoji)
+    channel = client.get_channel(payload.channel_id)
+    message = await channel.fetch_message(payload.message_id)
+    reaction_object = await get_reaction_object(message, reaction)
 
-# HELPERS
+    if reaction == config.get('starboard', 'emoteID') and reaction_object.count >= 1:
+        db = dataset.connect('sqlite:///guilds/' + str(SERVER_ID) + '/server.db')        
+        table = db['starboard']
 
+        result = table.find_one(message_id=message.id)
+        if result == None:
+            starboard_channel = client.get_channel(int(config.get('starboard', 'channelID')))
+            embed = await generate_starboard_embed(message, payload)
+
+            starboard_msg = await starboard_channel.send(embed=embed)
+
+            table.insert(dict(
+                message_id = message.id,
+                stars = reaction_object.count,
+                starboard_msg_id = starboard_msg.id))
+        else:
+            result = table.find_one(message_id=message.id)
+            starboard_msg = await channel.fetch_message(result['starboard_msg_id'])
+
+            data = dict(
+                starboard_msg_id = starboard_msg.id,
+                stars = reaction_object.count)
+            table.update(data, ['stardboard_msg_id'])
+
+            await starboard_msg.edit(embed=generate_starboard_embed(message, payload))
+    else:
+        return
+
+async def handle(message, message_event, client):
+    if message_event == med.MessageEvent.on_message:
+        await on_message(message, client)
+    elif message_event == med.MessageEvent.on_delete_message:
+        await on_delete_message(message, client)
+    elif message_event == med.MessageEvent.on_raw_reaction_add:
+        await on_raw_reaction_add(message, client)
+    else:
+        return
+
+### HELPERS ###
 def yell_check(message):
+    # Conditions:   1. Message must not be blank and more then 3 characters
+    #               2. Message must not ping anyone
+    #               3. Message must be all caps
+    # Also, self author check
     return (message.content != '' 
             and len(message.content) >= 3
             and len(message.mentions) == 0
@@ -40,32 +85,42 @@ def yell_check(message):
             and message.content == message.content.upper())
 
 async def handle_yell(message):
-    # init check
-    db = sqlite3.connect("guilds/160584505776799744/yells.db")
-    cursor = db.cursor()
-    sql_create_yell_table = ''' CREATE TABLE IF NOT EXISTS yells (
-                                id integer PRIMARY KEY,
-                                server_id int NOT NULL,
-                                author int NOT NULL,
-                                message_id int NOT NULL,
-                                message_text text NOT NULL,
-                                post_date timestamp NOT NULL
-                            ); '''
-    cursor.execute(sql_create_yell_table)
-    db.commit()
+    db = dataset.connect('sqlite:///guilds/' + str(SERVER_ID) + '/server.db')
+    table = db['yells']
+    table.insert(dict(
+        channel_id = message.channel.id,
+        author = message.author.id,
+        message_id = message.id,
+        message_text = message.content,
+        post_date = message.created_at
+        ))
 
-    # actual yell handle
-    server_id = message.guild.id
-    author = message.author.id
-    message_id = message.id
-    message_text = message.content
-    post_date = message.created_at
-
-    cursor.execute(''' INSERT INTO yells(server_id, author, message_id, message_text, post_date) 
-                        VALUES(?, ?, ?, ?, ?)''', (server_id, author, message_id, message_text, post_date))
-    db.commit()
-    cursor.execute('''SELECT * FROM yells ORDER BY RANDOM() LIMIT 1''')
-    randomly_selected_message = cursor.fetchone()
-    msg = randomly_selected_message[4]
+    result = db.query('''SELECT * FROM yells ORDER BY RANDOM() LIMIT 1''')
+    row = result.next()
+    msg = row['message_text']
+    db.close()
 
     await message.channel.send(msg)
+
+async def generate_starboard_embed(message, payload):
+    user = message.author
+    reaction = str(payload.emoji)
+
+    embed = discord.Embed(
+        title = message.content,
+        color = discord.Color.teal()
+    )
+    embed.set_author(name=user.name, icon_url=str(user.avatar_url))
+    embed.set_footer(text='{0} {1} ({2}) • {3} UTC'.format(
+        reaction.count,
+        config.get('starboard', 'emoteID'),
+        message.id,
+        message.created_at.strftime('%B %d, %Y')))
+
+    return embed
+
+async def get_reaction_object(message, emoji):
+    reactions = message.reactions
+    for r in reactions:
+        if str(r) == emoji:
+            return r

@@ -1,46 +1,69 @@
 import discord
-import auth
-
+import configparser
 import time
 from importlib import import_module
-
 import message_event_definitions as med
 
-client = discord.Client()
-server_cooldowns = {}
-server_blocks = set()
-server_rate_limit = 3 # seconds
+CONFIG_FILE = "config.ini"
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-
-    guild_id = str(message.guild.id)
-    if guild_id in server_cooldowns:
-        if time.time() < server_cooldowns[guild_id] + server_rate_limit:
-            return
-    server_cooldowns[guild_id] = time.time()
-
-    await handle(message, med.MessageEvent.on_message)
-
-@client.event
-async def on_delete_message(message):
-    await handle(message, med.MessageEvent.on_delete_message)
+class Chen(discord.Client):
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+        self.server_rate_limit = int(config.get('discord', 'serverRateLimit'))
+        self.server_cooldowns = {}
+        self.server_blocks = set()
     
-@client.event
-async def on_ready():
-    print("Chen woke up!")
-    print("----------------")
+    async def on_ready(self):
+        print("Chen woke up!")
 
-async def handle(message, message_event):
-    guild_id = str(message.guild.id)
-    try:
-        guild_module = import_module("guilds." + guild_id + ".server_main")
-        await guild_module.handle(message, message_event)
-    except ModuleNotFoundError:
-        print(".", end="")
-        # Received a message in an unconfigured server.
-        # Won't print anything here to avoid log clutter.
+    async def on_message(self, message):
+        if message.guild == None:
+            return
+        
+        if message.author.bot:
+            return
 
-client.run(auth.TOKEN)
+        #temporary emergency shutdown command
+        if (message.author.id == int(self.config.get('discord', 'globalAdmin')) 
+            and message.content == '!stop'):
+            await self.close()
+            
+        if not self.on_cooldown(message.guild.id):
+            await self.handle(message, med.MessageEvent.on_message)
+
+    async def on_delete_message(self, message):
+        await self.handle(message, med.MessageEvent.on_delete_message)
+
+    async def on_raw_reaction_add(self, payload):
+        await self.handle(payload, med.MessageEvent.on_raw_reaction_add)
+
+    async def handle(self, message, message_event):
+        try:
+            guild_id = str(message.guild.id)
+        except AttributeError:
+            guild_id = str(message.guild_id)
+
+        try:
+            guild_module = import_module("guilds." + guild_id + ".server_main")
+            await guild_module.handle(message, message_event, self)
+        except ModuleNotFoundError:
+            print(".", end="")
+            # Received a message in an unconfigured server.
+            # Won't print anything here to avoid log clutter.
+
+    def on_cooldown(self, guild_id):
+        on_cooldown = False
+        if guild_id in self.server_cooldowns:
+            if time.time() < self.server_cooldowns[guild_id] + self.server_rate_limit:
+                on_cooldown = True
+        self.server_cooldowns[guild_id] = time.time()
+        return on_cooldown
+            
+
+config = configparser.ConfigParser()
+config.read(CONFIG_FILE)
+token = config.get('discord', 'token')
+
+bot = Chen(config)
+bot.run(token)

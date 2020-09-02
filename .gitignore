@@ -1,4 +1,5 @@
-auth.py
+*.ini
+command.txt
 test.py
 *.db
 
