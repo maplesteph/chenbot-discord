@@ -33,7 +33,7 @@ async def on_raw_reaction_add(payload, client):
     message = await channel.fetch_message(payload.message_id)
     reaction_object = await get_reaction_object(message, reaction)
 
-    if reaction == config.get('starboard', 'emoteID') and reaction_object.count >= 1:
+    if reaction == config.get('starboard', 'emoteID') and reaction_object.count >= 5:
         db = dataset.connect('sqlite:///guilds/' + str(SERVER_ID) + '/server.db')        
         table = db['starboard']
 
