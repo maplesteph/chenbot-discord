@@ -29,7 +29,8 @@ async def on_message(message, client):
             description = message.content,
             color = discord.Color.red()
         )
-
+        embed.set_image(url="https://cdn.discordapp.com/attachments/746210589193535569/750673146188660736/chingun.mp4")
+        embed.add_field(name='\u200b', value='#{0}'.format(message.channel.mention))
         embed.set_author(name = message.author.name)
         await message.channel.send(embed=embed)
 
