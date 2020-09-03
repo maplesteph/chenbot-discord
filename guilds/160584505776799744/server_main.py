@@ -40,8 +40,8 @@ async def on_raw_reaction_add(payload, client):
         table = db['starboard']
 
         result = table.find_one(message_id=message.id)
+        starboard_channel = client.get_channel(int(config.get('starboard', 'channelID')))
         if result == None:
-            starboard_channel = client.get_channel(int(config.get('starboard', 'channelID')))
             embed = await generate_starboard_embed(message, reaction_object)
 
             starboard_msg = await starboard_channel.send(embed=embed)
@@ -52,14 +52,14 @@ async def on_raw_reaction_add(payload, client):
                 starboard_msg_id = starboard_msg.id))
         else:
             result = table.find_one(message_id=message.id)
-            starboard_msg = await channel.fetch_message(result['starboard_msg_id'])
+            starboard_msg = await starboard_channel.fetch_message(result['starboard_msg_id'])
 
             data = dict(
                 starboard_msg_id = starboard_msg.id,
                 stars = reaction_object.count)
-            table.update(data, ['stardboard_msg_id'])
+            table.upsert(data, ['stardboard_msg_id'])
 
-            await starboard_msg.edit(embed=generate_starboard_embed(message, reaction_object))
+            await starboard_msg.edit(embed=await generate_starboard_embed(message, reaction_object))
     else:
         return
 
