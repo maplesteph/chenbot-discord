@@ -11,6 +11,8 @@ CONFIG_FILE = 'guilds/' + str(SERVER_ID) + "/serverconfig.ini"
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
+cooldown = 0
+
 async def on_message(message, client):
     if (yell_check(message)):
         await handle_yell(message)
@@ -32,10 +34,11 @@ async def on_raw_reaction_add(payload, client):
     channel = client.get_channel(payload.channel_id)
     message = await channel.fetch_message(payload.message_id)
     reaction_object = await get_reaction_object(message, reaction)
-    if str(channel.id) == config.get('starboard', 'channelID'):
+    if (str(channel.id) == config.get('starboard', 'channelID')
+        or channel.is_nsfw()):
         return
 
-    if reaction == config.get('starboard', 'emoteID') and reaction_object.count >= 3:
+    if reaction == config.get('starboard', 'emoteID') and reaction_object.count >= 5:
         db = dataset.connect('sqlite:///guilds/' + str(SERVER_ID) + '/server.db')        
         table = db['starboard']
 
@@ -80,12 +83,17 @@ def yell_check(message):
     #               3. Message must be all caps
     # Also, self author check
     return (message.content != '' 
-            and len(message.content) >= 3
+            and len(message.content) >= 5
+            and len(message.content) <= 128
             and len(message.mentions) == 0
             and message.content.replace('\r', '').replace('\n', '') != ''
             and message.content == message.content.upper())
 
 async def handle_yell(message):
+    if time.time() < cooldown + config.get('misc', 'yellRateLimit')
+        return
+    cooldown = time.time()
+
     db = dataset.connect('sqlite:///guilds/' + str(SERVER_ID) + '/server.db')
     table = db['yells']
     table.insert(dict(
