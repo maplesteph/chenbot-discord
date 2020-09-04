@@ -90,7 +90,7 @@ def yell_check(message):
             and message.content == message.content.upper())
 
 async def handle_yell(message):
-    if time.time() < cooldown + config.get('misc', 'yellRateLimit')
+    if time.time() < cooldown + config.get('misc', 'yellRateLimit'):
         return
     cooldown = time.time()
 

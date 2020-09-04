@@ -15,7 +15,7 @@ class Chen(discord.Client):
         self.server_blocks = set()
     
     async def on_ready(self):
-        if (self.user.id == int(config.get('discord', 'chenTestID')):
+        if (self.user.id == int(config.get('discord', 'chenTestID'))):
             print("Now dreaming...")
         else:
             print("Chen woke up!")
