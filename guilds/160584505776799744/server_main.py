@@ -11,8 +11,6 @@ CONFIG_FILE = 'guilds/' + str(SERVER_ID) + "/serverconfig.ini"
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
-cooldown = 0
-
 async def on_message(message, client):
     if (yell_check(message)):
         await handle_yell(message)
@@ -90,10 +88,6 @@ def yell_check(message):
             and message.content == message.content.upper())
 
 async def handle_yell(message):
-    if time.time() < cooldown + config.get('misc', 'yellRateLimit'):
-        return
-    cooldown = time.time()
-
     db = dataset.connect('sqlite:///guilds/' + str(SERVER_ID) + '/server.db')
     table = db['yells']
     table.insert(dict(
