@@ -108,10 +108,10 @@ async def check_money(message, client):
 async def post_help(message, client):
     user = message.author
     dm_channel = await user.create_dm()
-    await dm_channel.send("""you can do .roll [amount] or .roll [amount] [odds], where odds is out of 100
-you are rewarded based on your odds, so if your odds are 30 (out of 100, then you are rewarded 1.7x (1 + (1 - (odds/100)))
-you can claim 500 points daily with .daily (i plan to make dailies more rewarding soon)
-i don't remember anything else off the top of my head""")
+    await dm_channel.send("you can do .roll [amount] or .roll [amount] [odds], where odds is out of 100\n"
+                            "you are rewarded based on your odds, so if your odds are 30 , then you will be rewarded (100 / 30) * bet amount\n"
+                            "you can claim 500 points daily with .daily (i plan to make dailies more rewarding soon)\n"
+                            "i don't remember anything else off the top of my head")
 
 async def handle_command(message, client):
     command = message.content[1:].split(' ')[0]
