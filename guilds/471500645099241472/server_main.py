@@ -58,7 +58,7 @@ async def slots(message, client):
     pull = random.randint(0, 100)
     threshold = 100 - odds
     if pull > threshold:
-        winnings = int(bet * (1 + (1 - (odds / 100))))
+        winnings = int(bet * (100 / odds))
         money = int(user_row['money'] - bet + winnings)
         msg = "{0}: You won! ({1} > {2}) (+{3}, you have {4} Poggers)".format(user.name, pull, threshold, winnings, money)
     else:
