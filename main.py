@@ -51,9 +51,8 @@ class Chen(discord.Client):
             guild_module = import_module("guilds." + guild_id + ".server_main")
             await guild_module.handle(message, message_event, self)
         except ModuleNotFoundError:
-            print(".", end="")
+            return
             # Received a message in an unconfigured server.
-            # Won't print anything here to avoid log clutter.
 
     def on_cooldown(self, guild_id):
         on_cooldown = False

@@ -1,6 +1,7 @@
 import discord
 import configparser
 import dataset
+import re
 import sys, os
 sys.path.insert(0, os.path.abspath('/...'))
 import message_event_definitions as med
@@ -11,9 +12,21 @@ CONFIG_FILE = 'guilds/' + str(SERVER_ID) + "/serverconfig.ini"
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
+async def handle(message, message_event, client):
+    if message_event == med.MessageEvent.on_message:
+        await on_message(message, client)
+    elif message_event == med.MessageEvent.on_delete_message:
+        await on_delete_message(message, client)
+    elif message_event == med.MessageEvent.on_raw_reaction_add:
+        await on_raw_reaction_add(message, client)
+    else:
+        return
+
 async def on_message(message, client):
-    if (yell_check(message)):
+    if yell_check(message):
         await handle_yell(message)
+    elif message.content == '!wholast':
+        await who_yelled(message)
 
 async def on_delete_message(message, client):
     if message.author.id == int(config.get('misc', 'kevinID')):
@@ -64,27 +77,22 @@ async def on_raw_reaction_add(payload, client):
     else:
         return
 
-async def handle(message, message_event, client):
-    if message_event == med.MessageEvent.on_message:
-        await on_message(message, client)
-    elif message_event == med.MessageEvent.on_delete_message:
-        await on_delete_message(message, client)
-    elif message_event == med.MessageEvent.on_raw_reaction_add:
-        await on_raw_reaction_add(message, client)
-    else:
-        return
-
 ### HELPERS ###
 def yell_check(message):
-    # Conditions:   1. Message must not be blank and more then 3 characters
-    #               2. Message must not ping anyone
-    #               3. Message must be all caps
-    # Also, self author check
-    return (message.content != '' 
+    # Conditions:   1. must not be blank
+    #               2. must not be just newlines
+    #               3. Message length must be between 5 and 128
+    #               4. must not ping anyone
+    #               5. must not just be a single emoji
+    #               6. must have alphanumerics
+    #               7. lbnl must be all caps
+    return (message.content != ''
+            and message.content.replace('\r', '').replace('\n', '') != ''
             and len(message.content) >= 5
             and len(message.content) <= 128
             and len(message.mentions) == 0
-            and message.content.replace('\r', '').replace('\n', '') != ''
+            and re.search(':[A-Z]*:', message.content) == None
+            and re.search('[A-Z]*', message.content) != None
             and message.content == message.content.upper())
 
 async def handle_yell(message):
@@ -104,6 +112,9 @@ async def handle_yell(message):
     db.close()
 
     await message.channel.send(msg)
+
+async def who_yelled(message):
+    return #nothing yet
 
 async def generate_starboard_embed(message, reaction):
     user = message.author
