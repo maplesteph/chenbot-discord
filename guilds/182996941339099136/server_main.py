@@ -10,12 +10,5 @@ CONFIG_FILE = "guilds/" + str(SERVER_ID) + "/serverconfig.ini"
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
-
 async def handle(message, message_event, client):
-    if message_event == med.MessageEvent.on_message:
-        await on_message(message, client)
-    else:
-        return
-
-async def on_message(message, client):
-    await message.channel.send("Received!")
+    return

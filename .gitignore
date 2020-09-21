@@ -1,10 +1,5 @@
 *.ini
-command.txt
-test.py
 *.db
-
 *.pyc
 __pycache__/
-
-/mods/
 out.log
