@@ -16,7 +16,7 @@ async def handle(message, message_event, client):
     if message_event == med.MessageEvent.on_message:
         await on_message(message, client)
     elif message_event == med.MessageEvent.on_delete_message:
-        await on_delete_message(message, client)
+        await on_message_delete(message, client)
     elif message_event == med.MessageEvent.on_raw_reaction_add:
         await on_raw_reaction_add(message, client)
     else:
@@ -28,7 +28,7 @@ async def on_message(message, client):
     elif message.content == '!wholast':
         await who_yelled(message)
 
-async def on_delete_message(message, client):
+async def on_message_delete(message, client):
     if message.author.id == int(config.get('misc', 'kevinID')):
         embed = discord.Embed(
             title = 'Recently deleted message',

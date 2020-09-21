@@ -35,7 +35,7 @@ class Chen(discord.Client):
         if not self.on_cooldown(message.guild.id):
             await self.handle(message, med.MessageEvent.on_message)
 
-    async def on_delete_message(self, message):
+    async def on_message_delete(self, message):
         await self.handle(message, med.MessageEvent.on_delete_message)
 
     async def on_raw_reaction_add(self, payload):
