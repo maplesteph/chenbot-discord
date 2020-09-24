@@ -91,8 +91,8 @@ def yell_check(message):
             and len(message.content) >= 5
             and len(message.content) <= 128
             and len(message.mentions) == 0
-            and re.search(':[A-Z]*:', message.content) == None
-            and re.search('[A-Z]*', message.content) != None
+            and re.search(':[A-Z]*:', message.content).group(0) == ''
+            and re.search('[A-Z]*', message.content).group(0) != ''
             and message.content == message.content.upper())
 
 async def handle_yell(message):
