@@ -128,7 +128,7 @@ async def who_yelled(message, client):
 
     embed = discord.Embed(
         description = "{0} taught me that on {1}!".format(author.name, post_date.strftime("%B %d %Y")),
-        color = discord.Color.blurple
+        color = discord.Color.blurple()
     )
 
     await message.channel.send(embed=embed)
