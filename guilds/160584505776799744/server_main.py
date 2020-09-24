@@ -102,7 +102,7 @@ async def handle_yell(message):
         channel_id = message.channel.id,
         author = message.author.id,
         message_id = message.id,
-        message_text = message.content,
+        message_text = message.content.replace('\r', '').replace('\n', ''),
         post_date = message.created_at
         ))
 
@@ -111,10 +111,30 @@ async def handle_yell(message):
     msg = row['message_text']
     db.close()
 
+    config['yells']['lastYell'] = str(row['id'])
+    with open('serverconfig.ini', 'w') as configfile:
+        config.write(configfile)
+
     await message.channel.send(msg)
 
-async def who_yelled(message):
-    return #nothing yet
+async def who_yelled(message, client):
+    last_yell_id = config.get('yells', 'lastYell')
+
+    db = dataset.connect('sqlite:///guilds/' + str(SERVER_ID) + '/server.db')
+    table = db['yells']
+    last_yell = table.find_one(id=last_yell_id)
+
+    author = client.get_user(last_yell['author'])
+    post_date = last_yell['post_date']
+    msg = client.user.fetch_message(last_yell['message_id'])
+
+    embed = discord.Embed(
+        description = "{0} taught me that on {1}!".format(author.name, post_date.strftime("%B %d %Y")),
+        color = discord.Color.blurple
+    )
+    embed.add_field(name='\u200b', value ='→ [original message]({0}) in {1}'.format(msg.jump_url, msg.channel.mention))
+
+    await message.channel.send(embed=embed)
 
 async def generate_starboard_embed(message, reaction):
     user = message.author
