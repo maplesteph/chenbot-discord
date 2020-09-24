@@ -91,20 +91,21 @@ def yell_check(message):
             and len(message.content) >= 5
             and len(message.content) <= 128
             and len(message.mentions) == 0
-            and re.search(':[A-Z]*:', message.content).group(0) == ''
-            and re.search('[A-Z]*', message.content).group(0) != ''
+            and re.search('[A-Z]+', message.content).group(0) != ''
             and message.content == message.content.upper())
 
 async def handle_yell(message):
     db = dataset.connect('sqlite:///guilds/' + str(SERVER_ID) + '/server.db')
     table = db['yells']
-    table.insert(dict(
-        channel_id = message.channel.id,
-        author = message.author.id,
-        message_id = message.id,
-        message_text = message.content.replace('\r', '').replace('\n', ''),
-        post_date = message.created_at
-        ))
+    
+    if table.find_one(message_text=message.content) == None: 
+        table.insert(dict(
+            channel_id = message.channel.id,
+            author = message.author.id,
+            message_id = message.id,
+            message_text = message.content.replace('\r', '').replace('\n', ''),
+            post_date = message.created_at
+            ))
 
     result = db.query('''SELECT * FROM yells ORDER BY RANDOM() LIMIT 1''')
     row = result.next()
