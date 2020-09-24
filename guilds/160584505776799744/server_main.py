@@ -125,13 +125,11 @@ async def who_yelled(message, client):
 
     author = client.get_user(last_yell['author'])
     post_date = last_yell['post_date']
-    msg = message.author.fetch_message(last_yell['message_id'])
 
     embed = discord.Embed(
         description = "{0} taught me that on {1}!".format(author.name, post_date.strftime("%B %d %Y")),
         color = discord.Color.blurple
     )
-    embed.add_field(name='\u200b', value ='→ [original message]({0}) in {1}'.format(msg.jump_url, msg.channel.mention))
 
     await message.channel.send(embed=embed)
 
