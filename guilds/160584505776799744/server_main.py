@@ -26,7 +26,7 @@ async def on_message(message, client):
     if yell_check(message):
         await handle_yell(message)
     elif message.content == '!wholast':
-        await who_yelled(message)
+        await who_yelled(message, client)
 
 async def on_message_delete(message, client):
     if message.author.id == int(config.get('misc', 'kevinID')):
@@ -79,18 +79,13 @@ async def on_raw_reaction_add(payload, client):
 
 ### HELPERS ###
 def yell_check(message):
-    # Conditions:   1. must not be blank
-    #               2. must not be just newlines
-    #               3. Message length must be between 5 and 128
-    #               4. must not ping anyone
-    #               5. must not just be a single emoji
-    #               6. must have alphanumerics
-    #               7. lbnl must be all caps
+    # too lazy to update conditions figure it out lol
     return (message.content != ''
             and message.content.replace('\r', '').replace('\n', '') != ''
             and len(message.content) >= 5
             and len(message.content) <= 128
             and len(message.mentions) == 0
+            and re.search('[A-Z]+', message.content).group(0) != None
             and re.search('[A-Z]+', message.content).group(0) != ''
             and message.content == message.content.upper())
 
@@ -124,6 +119,9 @@ async def who_yelled(message, client):
     db = dataset.connect('sqlite:///guilds/' + str(SERVER_ID) + '/server.db')
     table = db['yells']
     last_yell = table.find_one(id=last_yell_id)
+
+    if last_yell == None:
+        await message.channel.send("Couldn't find the last yell!")
 
     author = client.get_user(last_yell['author'])
     post_date = last_yell['post_date']
