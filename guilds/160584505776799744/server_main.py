@@ -125,7 +125,7 @@ async def who_yelled(message, client):
 
     author = client.get_user(last_yell['author'])
     post_date = last_yell['post_date']
-    msg = client.user.fetch_message(last_yell['message_id'])
+    msg = message.author.fetch_message(last_yell['message_id'])
 
     embed = discord.Embed(
         description = "{0} taught me that on {1}!".format(author.name, post_date.strftime("%B %d %Y")),
