@@ -15,8 +15,6 @@ config.read(CONFIG_FILE)
 async def handle(message, message_event, client):
     if message_event == med.MessageEvent.on_message:
         await on_message(message, client)
-    elif message_event == med.MessageEvent.on_delete_message:
-        await on_message_delete(message, client)
     elif message_event == med.MessageEvent.on_raw_reaction_add:
         await on_raw_reaction_add(message, client)
     else:
@@ -27,18 +25,6 @@ async def on_message(message, client):
         await handle_yell(message)
     elif message.content == '!wholast':
         await who_yelled(message, client)
-
-async def on_message_delete(message, client):
-    if message.author.id == int(config.get('misc', 'kevinID')):
-        embed = discord.Embed(
-            title = 'Recently deleted message',
-            description = message.content,
-            color = discord.Color.red()
-        )
-
-        embed.set_author(name=message.author.name)
-        embed.set_thumbnail(url=str(message.author.avatar_url))
-        await message.channel.send(embed=embed)
 
 async def on_raw_reaction_add(payload, client):
     reaction = str(payload.emoji)
