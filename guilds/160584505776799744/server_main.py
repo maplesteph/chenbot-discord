@@ -21,7 +21,9 @@ async def handle(message, message_event, client):
         return
 
 async def on_message(message, client):
-    if yell_check(message):
+    if message.channel.id == config.get('misc','peopleCID'):
+        return
+    elif yell_check(message):
         await handle_yell(message)
     elif message.content == '!wholast':
         await who_yelled(message, client)
