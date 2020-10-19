@@ -70,11 +70,12 @@ def yell_check(message):
     # too lazy to update conditions figure it out lol
     return (message.content != ''
             and message.content.replace('\r', '').replace('\n', '') != ''
-            and len(message.content) >= 5
+            and len(message.content) >= 8
             and len(message.content) <= 128
             and len(message.mentions) == 0
             and re.search('[A-Z]+', message.content) != None
             and re.search('[A-Z]+', message.content).group(0) != ''
+            and ':' not in message.content
             and message.content == message.content.upper())
 
 async def handle_yell(message):
