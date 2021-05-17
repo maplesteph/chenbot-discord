@@ -14,7 +14,7 @@ async def handle(message, message_event, client):
         return
     
     sb = starboard.Starboard(config)
-    sb.handle(message, message_event, client)
+    await sb.handle(message, message_event, client)
 
     y = yeller.Yeller(config)
-    y.handle(message, message_event, client)
+    await y.handle(message, message_event, client)
