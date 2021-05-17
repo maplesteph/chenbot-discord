@@ -1,4 +1,3 @@
-import discord
 import configparser
 import dataset
 import sys, os
