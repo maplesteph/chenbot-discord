@@ -1,21 +1,23 @@
+import sys, getopt
+
 import discord
 import configparser
 import time
+
 from importlib import import_module
 import message_event_definitions as med
 
-CONFIG_FILE = "config.ini"
-
 class Chen(discord.Client):
-    def __init__(self, config):
+    def __init__(self, config, debug):
         super().__init__()
         self.config = config
+        self.debug = debug
         self.server_rate_limit = int(config.get('discord', 'serverRateLimit'))
         self.server_cooldowns = {}
         self.server_blocks = set()
     
     async def on_ready(self):
-        if (self.user.id == int(config.get('discord', 'chenTestID'))):
+        if self.debug:
             print("Now dreaming...")
         else:
             print("Chen woke up!")
@@ -27,7 +29,7 @@ class Chen(discord.Client):
         if message.author.bot:
             return
 
-        #temporary emergency shutdown command
+        # "temporary" emergency shutdown command
         if (message.author.id == int(self.config.get('discord', 'globalAdmin')) 
             and message.content == '!quit'):
             await self.close()
@@ -51,8 +53,8 @@ class Chen(discord.Client):
             guild_module = import_module("guilds." + guild_id + ".server_main")
             await guild_module.handle(message, message_event, self)
         except ModuleNotFoundError:
-            return
             # Received a message in an unconfigured server.
+            return
 
     def on_cooldown(self, guild_id):
         on_cooldown = False
@@ -61,11 +63,35 @@ class Chen(discord.Client):
                 on_cooldown = True
         self.server_cooldowns[guild_id] = time.time()
         return on_cooldown
-            
 
-config = configparser.ConfigParser()
-config.read(CONFIG_FILE)
-token = config.get('discord', 'token')
+def print_help():
+    print("    d, debug        Run as ChenTest")
 
-bot = Chen(config)
-bot.run(token)
+def main(argv):
+    CONFIG_FILE = "config.ini"
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE)
+    token = config.get('discord', 'defaultToken')
+    debug = False
+
+    short_opts = "dh"
+    long_opts = ["debug", "help"]
+
+    try:
+        opts, args = getopt.getopt(argv[1:], short_opts, long_opts)
+    except getopt.error as err:
+        print(str(err))
+        sys.exit(1)
+
+    for opt, arg in opts:
+        if opt in ("-d", "--debug"):
+            debug = True
+            token = config.get('discord', 'debugToken')
+        elif opt in ("-h", "--help"):
+            print_help()
+            return
+
+    bot = Chen(config, debug)
+    bot.run(token)
+
+main(sys.argv)
