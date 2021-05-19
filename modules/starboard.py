@@ -19,10 +19,13 @@ class Starboard:
             or channel.is_nsfw()):
             return
         if reaction == self.config.get('starboard', 'emoteID') and reaction_object.count >= int(self.config.get('starboard', 'threshold')):
-            db = dataset.connect('sqlite:///guilds/' + self.config.get('meta', 'id') + '/server.db')        
+            db = dataset.connect('sqlite:///guilds/' + self.config.get('meta', 'id') + '/server.db')
             table = db['starboard']
+
             result = table.find_one(message_id=message.id)
+
             starboard_channel = client.get_channel(int(self.config.get('starboard', 'channelID')))
+            
             if result == None:
                 embed = await self.generate_starboard_embed(message, reaction_object)
                 starboard_msg = await starboard_channel.send(embed=embed)
@@ -33,10 +36,12 @@ class Starboard:
             else:
                 result = table.find_one(message_id=message.id)
                 starboard_msg = await starboard_channel.fetch_message(result['starboard_msg_id'])
+                
                 data = dict(
                     starboard_msg_id = starboard_msg.id,
                     stars = reaction_object.count)
                 table.upsert(data, ['stardboard_msg_id'])
+
                 await starboard_msg.edit(embed=await self.generate_starboard_embed(message, reaction_object))
         else:
             return
