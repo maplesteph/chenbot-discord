@@ -9,7 +9,7 @@ import message_event_definitions as med
 
 class Chen(discord.Client):
     def __init__(self, config, debug):
-        super().__init__()
+        super().__init__(intents = discord.Intents.default())
         self.config = config
         self.debug = debug
         self.server_rate_limit = int(config.get('discord', 'serverRateLimit'))
@@ -66,6 +66,7 @@ class Chen(discord.Client):
 
 def print_help():
     print("    d, debug        Run as ChenTest")
+    print("    l, lumi         Run as Lumi")
 
 def main(argv):
     CONFIG_FILE = "config.ini"
@@ -74,8 +75,8 @@ def main(argv):
     token = config.get('discord', 'defaultToken')
     debug = False
 
-    short_opts = "dh"
-    long_opts = ["debug", "help"]
+    short_opts = "dhl"
+    long_opts = ["debug", "help", "lumi"]
 
     try:
         opts, args = getopt.getopt(argv[1:], short_opts, long_opts)
@@ -90,6 +91,8 @@ def main(argv):
         elif opt in ("-h", "--help"):
             print_help()
             return
+        elif opt in ("-l", "--lumi"):
+            token = config.get('discord', 'lumiToken')            
 
     bot = Chen(config, debug)
     bot.run(token)
