@@ -19,7 +19,7 @@ class Starboard:
             or channel.is_nsfw()):
             return
         if reaction == self.config.get('starboard', 'emoteID') and reaction_object.count >= int(self.config.get('starboard', 'threshold')):
-            db = dataset.connect('sqlite:///guilds/' + self.config.get('meta', 'id') + '/starboard/server.db')
+            db = dataset.connect('sqlite:///guilds/' + self.config.get('meta', 'id') + '/server.db')
             table = db['starboard']
 
             result = table.find_one(message_id=message.id)
