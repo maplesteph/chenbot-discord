@@ -27,7 +27,7 @@ class Yeller:
             and message.content == message.content.upper())
 
     async def handle_yell(self, message):
-        db = dataset.connect('sqlite:///guilds/' + self.config.get('meta', 'id') + '/server.db')
+        db = dataset.connect('sqlite:///guilds/' + self.config.get('meta', 'id') + '/yeller/server.db')
         table = db['yells']
 
         if table.find_one(message_text=message.content) == None: 
